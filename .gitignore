@@ -1,0 +1,41 @@
+# Bicep build output
+*.json
+
+# Deployment parameter files with secrets
+*.parameters.json
+*.parameters.dev.json
+*.parameters.prod.json
+
+# VS Code settings and local environment files
+.vscode/
+*.code-workspace
+
+# Azure CLI local cache and credentials
+.azure/
+*.azuredevops/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+
+# Node modules (if using linting or automation scripts)
+node_modules/
+
+# Terraform or other IaC tools (if mixed project)
+.terraform/
+terraform.tfstate
+terraform.tfstate.backup
+*.tfvars
+
+# Python virtual environments (if used for tooling)
+.venv/
+env/
+venv/
+
+# Ignore deployment test output
+*.bicepparam

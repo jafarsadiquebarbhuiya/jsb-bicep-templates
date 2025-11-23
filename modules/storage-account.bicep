@@ -1,4 +1,4 @@
-param storage_account_name string = 'stgjafarde010'
+param storage_account_name string = 'stgjafarde01010'
 param azure_resource_location string = 'eastus'
 param storage_account_sku string = 'Standard_LRS'
 

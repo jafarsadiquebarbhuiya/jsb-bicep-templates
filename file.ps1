@@ -1,12 +1,15 @@
-# Variables Configuration
+# -----------------------------------------------------------------------------
+# Azure Deployment Cleanup & Lock Management Script
+# -----------------------------------------------------------------------------
+
+# --- Variables ---
 $subscriptionId = "9dc0b1a6-8062-4d72-b39d-7d45d1b38ab6"
 $numberOfDeploymentsToKeep = 0  # Number of recent deployments to keep per Resource Group
 
-# Set the subscription context
-Write-Host "Setting subscription context to: $subscriptionId" -ForegroundColor Yellow
-az account set --subscription $subscriptionId
-
-# Check if logged in and subscription is set
+# -----------------------------------------------------------------------------
+# 1. Set Context
+# -----------------------------------------------------------------------------
+Write-Host "Setting subscription context to subscription is set
 $currentSub = az account show --query "id" -o tsv 2>$null
 if ($LASTEXITCODE -ne 0 -or $currentSub -ne $subscriptionId) {
     Write-Error "Failed to set subscription context. Please ensure you're logged in with 'az login'"
@@ -15,10 +18,7 @@ if ($LASTEXITCODE -ne 0 -or $currentSub -ne $subscriptionId) {
 
 Write-Host "Successfully set subscription context" -ForegroundColor Green
 
-# Initialize arrays to store lock information
-$allOriginalLocks = @()
-
-Write-Host "`n=== PHASE 1: IDENTIFYING AND REMOVING RESOURCE LOCKS ===" -ForegroundColor Green
+# Initialize arrays to store AND REMOVING RESOURCE LOCKS ===" -ForegroundColor Green
 
 try {
     Write-Host "Identifying resource locks across subscription." -ForegroundColor Cyan
@@ -33,20 +33,17 @@ try {
                 name              = $lock.name
                 level             = $lock.level
                 notes             = $lock.notes
-                resourceId        = ""
+                resourceId        = $lock.id -replace "/providers/Microsoft\.Authorization/locks/[^/]+$", ""
                 scope             = ""
                 resourceGroupName = ""
             }
             
-            $lockInfo.resourceId = $lock.id -replace "/providers/Microsoft\.Authorization/locks/[^/]+$", ""
             $idParts = $lock.id -split '/'
             
             if ($idParts.Count -eq 4) {
                 $lockInfo.scope = "subscription"
             }
-            elseif ($idParts.Count -eq 6) {
-                $lockInfo.scope = "resourcegroup"
-                $lockInfo.resourceGroupName = $idParts[4]
+            elseif ($idParts.Count -eq 6) {[4]
             }
             else {
                 $lockInfo.scope = "resource" 
@@ -63,16 +60,14 @@ try {
             
             $deleteSuccess = $false
             
-            Write-Host "  Attempting deletion by ID." -ForegroundColor Gray
+            # Method 1: Use lock ID
             az lock delete --ids "$($lockInfo.id)" 2>$null
-            
             if ($LASTEXITCODE -eq 0) {
-                Write-Host "  ✅ Successfully removed by ID: $($lockInfo.name)" -ForegroundColor Green
+                Write-Host " ✅ Successfully removed by ID: $($lockInfo.name)" -ForegroundColor Green
                 $deleteSuccess = $true
             }
             else {
-                Write-Host "  ID deletion failed, trying scope-specific deletion." -ForegroundColor Gray
-                
+                # Method 2: Use scope-specific deletion
                 switch ($lockInfo.scope) {
                     "subscription" {
                         az lock delete --name "$($lockInfo.name)" --subscription $subscriptionId 2>$null
@@ -86,20 +81,22 @@ try {
                 }
                 
                 if ($LASTEXITCODE -eq 0) {
-                    Write-Host "  ✅ Successfully removed by scope: $($lockInfo.name)" -ForegroundColor Green
+                    Write-Host " ✅ Successfully removed by scope: $($lockInfo.name)" -ForegroundColor Green
                     $deleteSuccess = $true
                 }
                 else {
                     Write-Host " ❌ Failed to remove: $($lockInfo.name)" -ForegroundColor Red
                 }
             }
-            
+
             if (-not $deleteSuccess) {
                 Write-Warning "Could not remove lock: $($lockInfo.name). Manual intervention may be required."
             }
         }
         
         Write-Host "Lock removal process completed!" -ForegroundColor Green
+        
+        # Wait longer for Azure to propagate the lock changes
         Start-Sleep -Seconds 20
     }
     else {
@@ -114,6 +111,7 @@ catch {
 Write-Host "`n=== PHASE 2: DELETING OLD DEPLOYMENTS ===" -ForegroundColor Green
 
 try {
+    # Get all resource groups for deployment cleanup
     Write-Host "Retrieving resource groups." -ForegroundColor Cyan
     $resourceGroupsJson = az group list --query "[].name" -o json 2>$null
     
@@ -122,6 +120,8 @@ try {
         
         foreach ($rgName in $resourceGroups) {
             Write-Host "`nProcessing deployments in Resource Group: $rgName" -ForegroundColor Cyan
+            
+            # Get all deployments in the resource group
             $deploymentsJson = az deployment group list --resource-group $rgName --query "[].{name:name,timestamp:properties.timestamp}" -o json 2>$null
             
             if ($deploymentsJson -and $deploymentsJson -ne "[]") {
@@ -134,6 +134,8 @@ try {
                     
                     foreach ($deployment in $deploymentsToDelete) {
                         Write-Host "Deleting deployment: $($deployment.name) (Created: $($deployment.timestamp))" -ForegroundColor White
+                        
+                        # First attempt with --no-wait
                         az deployment group delete --resource-group $rgName --name $deployment.name --no-wait 2>$null
                         
                         if ($LASTEXITCODE -eq 0) {
@@ -141,6 +143,8 @@ try {
                         }
                         else {
                             Write-Host " ⚠️  First attempt failed, trying synchronous deletion." -ForegroundColor Yellow
+                            
+                            # Second attempt without --no-wait
                             az deployment group delete --resource-group $rgName --name $deployment.name 2>$null
                             
                             if ($LASTEXITCODE -eq 0) {
@@ -153,17 +157,11 @@ try {
                     }
                 }
                 else {
-                    Write-Host "No deployments to delete (keeping: $numberOfDeploymentsToKeep)" -ForegroundColor Yellow
-                }
-            }
-            else {
-                Write-Host "No deployments found in resource group: $rgName" -ForegroundColor Yellow
-            }
-        }
+                    Write-Host "No deployments to delete (
     }
     
-    Write-Host "`nProcessing subscription-level deployments." -ForegroundColor Cyan
-    $subDeploymentsJson = az deployment sub list --query "[].{name:name,timestamp:properties.timestamp}" -o json 2>$null
+    # Also clean up subscription-level deployments
+    Write-Host "`nProcessing subscriptionname:name,timestamp:properties.timestamp}" -o json 2>$null
     
     if ($subDeploymentsJson -and $subDeploymentsJson -ne "[]") {
         $subscriptionDeployments = $subDeploymentsJson | ConvertFrom-Json | Sort-Object timestamp -Descending
@@ -171,10 +169,9 @@ try {
         if ($subscriptionDeployments.Count -gt $numberOfDeploymentsToKeep) {
             $subDeploymentsToDelete = $subscriptionDeployments | Select-Object -Skip $numberOfDeploymentsToKeep
             
-            Write-Host "Deleting $($subDeploymentsToDelete.Count) old subscription deployments" -ForegroundColor Yellow
-            
-            foreach ($deployment in $subDeploymentsToDelete) {
+            Write-Host "Deleting $($submentsToDelete) {
                 Write-Host "Deleting subscription deployment: $($deployment.name)" -ForegroundColor White
+                
                 az deployment sub delete --name $deployment.name --no-wait 2>$null
                 
                 if ($LASTEXITCODE -eq 0) {
@@ -192,7 +189,8 @@ try {
     else {
         Write-Host "No subscription-level deployments found" -ForegroundColor Yellow
     }
-
+    
+    # Wait for deployment deletions to complete
     Start-Sleep -Seconds 20
 }
 catch {
@@ -209,6 +207,7 @@ try {
         foreach ($lockInfo in $allOriginalLocks) {
             Write-Host "Restoring lock: $($lockInfo.name) (Scope: $($lockInfo.scope))" -ForegroundColor White
             
+            # Prepare notes parameter
             $notesParam = if ($lockInfo.notes -and ($lockInfo.notes.ToString().Trim() -ne "")) { 
                 $lockInfo.notes.ToString().Trim() 
             }
@@ -216,35 +215,23 @@ try {
                 "Restored by automation script" 
             }
             
-            try {
-                $restoreSuccess = $false
-                
-                switch ($lockInfo.scope) {
-                    "subscription" {
-                        az lock create --name "$($lockInfo.name)" --lock-type "$($lockInfo.level)" --notes "$notesParam" --subscription $subscriptionId 2>$null
-                    }
-                    "resourcegroup" {
-                        az lock create --name "$($lockInfo.name)" --lock-type "$($lockInfo.level)" --notes "$notesParam" --resource-group "$($lockInfo.resourceGroupName)" 2>$null
-                    }
-                    "resource" {
-                        az lock create --name "$($lockInfo.name)" --lock-type "$($lockInfo.level)" --notes "$notesParam" --resource "$($lockInfo.resourceId)" 2>$null
-                    }
+            switch ($lockInfo.scope) {
+                "subscription" {
+                    az lock create --name "$($lockInfo.name)" --lock-type "$($lockInfo.level)" --notes "$notesParam" --subscription $subscriptionId 2>$null
                 }
-                
-                if ($LASTEXITCODE -eq 0) {
-                    Write-Host " ✅ Successfully restored: $($lockInfo.name)" -ForegroundColor Green
-                    $restoreSuccess = $true
+                "resourcegroup" {
+                    az lock create --name "$($lockInfo.name)" --lock-type "$($lockInfo.level)" --notes "$notesParam" --resource-group "$($lockInfo.resourceGroupName)" 2>$null
                 }
-                else {
-                    Write-Host " ❌ Failed to restore: $($lockInfo.name)" -ForegroundColor Red
-                }
-                
-                if (-not $restoreSuccess) {
-                    Write-Warning "Could not restore lock: $($lockInfo.name). Manual restoration may be required."
+                "resource" {
+                    az lock create --name "$($lockInfo.name)" --lock-type "$($lockInfo.level)" --notes "$notesParam" --resource "$($lockInfo.resourceId)" 2>$null
                 }
             }
-            catch {
-                Write-Warning "Exception restoring lock $($lockInfo.name): $($_.Exception.Message)"
+            
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host " ✅ Successfully restored: $($lockInfo.name)" -ForegroundColor Green
+            }
+            else {
+                Write-Warning "❌ Failed to restore: $($lockInfo.name)"
             }
         }
         
@@ -256,7 +243,6 @@ try {
 }
 catch {
     Write-Error "Error during lock restoration: $($_.Exception.Message)"
-    Write-Warning "Some locks may not have been restored. Please review manually."
 }
 
 Write-Host "`n=== SCRIPT EXECUTION COMPLETED ===" -ForegroundColor Green

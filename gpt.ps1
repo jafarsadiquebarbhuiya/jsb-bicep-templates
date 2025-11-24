@@ -1,207 +1,228 @@
 # Requires: Az.Accounts, Az.Resources
-# Connect-AzAccount # Uncomment if not already logged in
+# Connect-AzAccount  # Uncomment if not logged in
 
 # ==============================
-# Variables
+# Config
 # ==============================
-$SubscriptionId = "9dc0b1a6-8062-4d72-b39d-7d45d1b38ab6"   # e.g. "00000000-0000-0000-0000-000000000000"
-$WhatIf = $false                             # Set $true to simulate only
+$SubscriptionId = "9dc0b1a6-8062-4d72-b39d-7d45d1b38ab6"
+$ResourceGroups = @("demo-rg")   # Add more RGs if needed
+$WhatIf = $false         # true = dry run, no changes
 $VerboseLogging = $true
 
 # ==============================
-# Select Subscription
+# Context
 # ==============================
-if ($VerboseLogging) { Write-Host "Setting context to subscription: $SubscriptionId" -ForegroundColor Cyan }
+if ($VerboseLogging) {
+    Write-Host "Setting context to subscription: $SubscriptionId" -ForegroundColor Cyan
+}
 Set-AzContext -Subscription $SubscriptionId | Out-Null
 
 # ==============================
-# 1. Get all locks in subscription
+# Helper: show current locks on an RG
 # ==============================
-if ($VerboseLogging) { Write-Host "Retrieving all locks in subscription..." -ForegroundColor Cyan }
-
-# This gets locks at all scopes under the subscription
-$allLocks = Get-AzResourceLock -AtScope "/subscriptions/$SubscriptionId"
-
-if (-not $allLocks) {
-    Write-Host "No resource locks found in subscription." -ForegroundColor Yellow
-    return
-}
-
-# Filter to only resource-level locks (exclude subscription- and RG-level if desired)
-# Comment/uncomment depending on what you want:
-$resourceLevelLocks = $allLocks | Where-Object {
-    $_.ResourceId -match "^/subscriptions/.*/resourceGroups/.*/providers/.+/.+"
-}
-
-if (-not $resourceLevelLocks) {
-    Write-Host "No resource-level locks found (only subscription/RG-level locks exist)." -ForegroundColor Yellow
-    return
-}
-
-if ($VerboseLogging) {
-    Write-Host "Total locks found: $($allLocks.Count)" -ForegroundColor Green
-    Write-Host "Resource-level locks to process: $($resourceLevelLocks.Count)" -ForegroundColor Green
-}
-
-# ==============================
-# Group locks by ResourceId
-# ==============================
-$locksByResource = $resourceLevelLocks | Group-Object -Property ResourceId
-
-if ($VerboseLogging) {
-    Write-Host "Number of locked resources: $($locksByResource.Count)" -ForegroundColor Green
-}
-
-# Variable to track how many locks we removed
-$TotalLocksRemoved = 0
-
-# To store original lock definitions so we can recreate them
-$LocksToRecreate = @()
-
-# ==============================
-# Helper: Remove locks for a given resource
-# ==============================
-function Remove-ResourceLocks {
+function Show-RgLocks {
     param(
-        [Parameter(Mandatory = $true)]
-        [string] $ResourceId,
-        [Parameter(Mandatory = $true)]
-        [array] $Locks
+        [Parameter(Mandatory = $true)][string] $RgName
     )
 
-    foreach ($lock in $Locks) {
-        if ($WhatIf) {
-            Write-Host "[WhatIf] Would remove lock '$($lock.Name)' on '$ResourceId'" -ForegroundColor Yellow
-        }
-        else {
-            Write-Host "Removing lock '$($lock.Name)' on '$ResourceId'" -ForegroundColor Yellow
-            Remove-AzResourceLock -LockId $lock.LockId -Force -ErrorAction Stop
-        }
-        $script:TotalLocksRemoved++
+    Write-Host "Current locks on RG '$RgName':" -ForegroundColor Cyan
+    $locks = Get-AzResourceLock -ResourceGroupName $RgName -ErrorAction SilentlyContinue
+    if (-not $locks) {
+        Write-Host "  (none)" -ForegroundColor DarkYellow
+    }
+    else {
+        $locks | Select-Object Name, ResourceId, LockId, LockLevel, Level, Notes | Format-Table -AutoSize
     }
 }
 
 # ==============================
-# Helper: Recreate locks for a given resource
+# Main per-RG logic
 # ==============================
-function Recreate-ResourceLocks {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string] $ResourceId,
-        [Parameter(Mandatory = $true)]
-        [array] $LockDefinitions
-    )
+foreach ($rgName in $ResourceGroups) {
 
-    foreach ($lockDef in $LockDefinitions) {
-        if ($WhatIf) {
-            Write-Host "[WhatIf] Would recreate lock '$($lockDef.Name)' on '$ResourceId' (Level: $($lockDef.Level))" -ForegroundColor Yellow
-        }
-        else {
-            Write-Host "Recreating lock '$($lockDef.Name)' on '$ResourceId' (Level: $($lockDef.Level))" -ForegroundColor Yellow
-            New-AzResourceLock `
-                -LockName $lockDef.Name `
-                -LockLevel $lockDef.Level `
-                -LockNotes $lockDef.Notes `
-                -Scope $ResourceId | Out-Null
-        }
-    }
-}
+    Write-Host "============================================================" -ForegroundColor Cyan
+    Write-Host "Processing resource group: $rgName" -ForegroundColor Cyan
 
-# ==============================
-# Helper: Delete deployments for a resource
-# ==============================
-function Remove-ResourceDeployments {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string] $ResourceId
-    )
+    $rgScope = "/subscriptions/$SubscriptionId/resourceGroups/$rgName"
 
-    # Extract Resource Group name from ResourceId:
-    # /subscriptions/{subId}/resourceGroups/{rgName}/providers/...
-    $rgName = ($ResourceId -split "/")[4]
+    # 0. Show locks at start
+    Show-RgLocks -RgName $rgName
 
-    if (-not $rgName) {
-        Write-Host "Could not parse resource group name from ResourceId: $ResourceId" -ForegroundColor Red
-        return
-    }
-
+    # ---------------------------------------------------------
+    # 1. Get ALL locks under this RG scope
+    # ---------------------------------------------------------
     if ($VerboseLogging) {
-        Write-Host "Looking for deployments in resource group '$rgName' for resource '$ResourceId'" -ForegroundColor Cyan
+        Write-Host "Retrieving all locks under scope '$rgScope'..." -ForegroundColor Cyan
     }
 
-    # Get all deployments in the resource group
+    $allLocksInRg = Get-AzResourceLock -Scope $rgScope -ErrorAction SilentlyContinue
+
+    if (-not $allLocksInRg) {
+        Write-Host "No locks found under scope '$rgScope'." -ForegroundColor DarkYellow
+    }
+    else {
+        Write-Host "Raw locks returned under '$rgScope': $($allLocksInRg.Count)" -ForegroundColor Green
+    }
+
+    # ---------------------------------------------------------
+    # 2. Classify locks:
+    #    - locks ON the RG itself
+    #    - locks under child resources (deployments, etc.)
+    # ---------------------------------------------------------
+    $rgLevelLocks = @()
+    $childResourceLocks = @()
+
+    foreach ($lock in $allLocksInRg) {
+
+        # ResourceId of the lock resource:
+        #   /subscriptions/.../resourceGroups/demo-rg/providers/Microsoft.Authorization/locks/<name>
+        $lockResourceId = $lock.ResourceId
+
+        # The actual locked scope is the parent of the lock resource:
+        #   /subscriptions/.../resourceGroups/demo-rg
+        $lockedScope = $lockResourceId -replace "/providers/Microsoft\.Authorization/locks/[^/]+$", ""
+
+        # Determine lock level from LockLevel or Level
+        $lockLevel = $null
+        if ($lock.PSObject.Properties['LockLevel']) {
+            $lockLevel = $lock.LockLevel
+        }
+        elseif ($lock.PSObject.Properties['Level']) {
+            $lockLevel = $lock.Level
+        }
+
+        $lockInfo = [PSCustomObject]@{
+            LockName    = $lock.Name
+            LockId      = $lock.LockId
+            LockedScope = $lockedScope
+            LockLevel   = $lockLevel
+            LockNotes   = $lock.Notes
+        }
+
+        if ($lockedScope -ieq $rgScope) {
+            $rgLevelLocks += $lockInfo
+        }
+        else {
+            $childResourceLocks += $lockInfo
+        }
+    }
+
+    Write-Host "Locks whose scope IS the RG:" -ForegroundColor Cyan
+    if ($rgLevelLocks.Count -eq 0) {
+        Write-Host "  (none)" -ForegroundColor DarkYellow
+    }
+    else {
+        $rgLevelLocks | Select-Object LockName, LockedScope, LockLevel | Format-Table -AutoSize
+    }
+
+    Write-Host "Locks whose scope is a CHILD resource under the RG:" -ForegroundColor Cyan
+    if ($childResourceLocks.Count -eq 0) {
+        Write-Host "  (none)" -ForegroundColor DarkYellow
+    }
+    else {
+        $childResourceLocks | Select-Object LockName, LockedScope, LockLevel | Format-Table -AutoSize
+    }
+
+    # ---------------------------------------------------------
+    # 3. Remove RG-level locks (these are the ones blocking RG deployments)
+    # ---------------------------------------------------------
+    $removedLocks = @()
+
+    if ($rgLevelLocks.Count -gt 0) {
+        Write-Host "Removing RG-level locks for '$rgName'..." -ForegroundColor Yellow
+
+        foreach ($l in $rgLevelLocks) {
+            if ($WhatIf) {
+                Write-Host "[WhatIf] Would remove lock '$($l.LockName)' at scope '$($l.LockedScope)'" -ForegroundColor Yellow
+            }
+            else {
+                Write-Host "Removing lock '$($l.LockName)' at scope '$($l.LockedScope)'" -ForegroundColor Yellow
+                # Remove by name+scope, with Force
+                Remove-AzResourceLock -LockName $l.LockName -Scope $l.LockedScope -Force -ErrorAction Stop
+            }
+            $removedLocks += $l
+        }
+    }
+    else {
+        Write-Host "No RG-level locks to remove for '$rgName'." -ForegroundColor DarkYellow
+    }
+
+    # (Optional) Also remove locks on deployments themselves if you want
+    if ($childResourceLocks.Count -gt 0) {
+        Write-Host "Removing child-resource locks under '$rgName' (including deployment-level locks)..." -ForegroundColor Yellow
+
+        foreach ($l in $childResourceLocks) {
+            if ($WhatIf) {
+                Write-Host "[WhatIf] Would remove child lock '$($l.LockName)' at scope '$($l.LockedScope)'" -ForegroundColor Yellow
+            }
+            else {
+                Write-Host "Removing child lock '$($l.LockName)' at scope '$($l.LockedScope)'" -ForegroundColor Yellow
+                Remove-AzResourceLock -LockName $l.LockName -Scope $l.LockedScope -Force -ErrorAction Stop
+            }
+            $removedLocks += $l
+        }
+    }
+
+    Write-Host "Locks removed in this run for '$rgName': $($removedLocks.Count)" -ForegroundColor Green
+
+    # Show locks after removal
+    Show-RgLocks -RgName $rgName
+
+    # ---------------------------------------------------------
+    # 4. Delete all deployments in the RG
+    # ---------------------------------------------------------
+    Write-Host "Looking for deployments in RG '$rgName'..." -ForegroundColor Cyan
     $deployments = Get-AzResourceGroupDeployment -ResourceGroupName $rgName -ErrorAction SilentlyContinue
 
     if (-not $deployments) {
-        if ($VerboseLogging) {
-            Write-Host "No deployments found in RG '$rgName'." -ForegroundColor DarkYellow
+        Write-Host "No deployments found in RG '$rgName'." -ForegroundColor DarkYellow
+    }
+    else {
+        foreach ($dep in $deployments) {
+            if ($WhatIf) {
+                Write-Host "[WhatIf] Would remove deployment '$($dep.DeploymentName)' in RG '$rgName'" -ForegroundColor Yellow
+            }
+            else {
+                Write-Host "Removing deployment '$($dep.DeploymentName)' in RG '$rgName'" -ForegroundColor Yellow
+                Remove-AzResourceGroupDeployment -ResourceGroupName $rgName -Name $dep.DeploymentName -ErrorAction Stop
+            }
         }
-        return
     }
 
-    # You can either:
-    # 1) delete ALL deployments in the RG, or
-    # 2) try to filter by those that might be relevant to this resource.
-    #
-    # Here, we delete ALL RG deployments – adjust if you want narrower targeting.
-    foreach ($dep in $deployments) {
-        if ($WhatIf) {
-            Write-Host "[WhatIf] Would remove deployment '$($dep.DeploymentName)' in RG '$rgName'" -ForegroundColor Yellow
-        }
-        else {
-            Write-Host "Removing deployment '$($dep.DeploymentName)' in RG '$rgName'" -ForegroundColor Yellow
-            Remove-AzResourceGroupDeployment -ResourceGroupName $rgName -Name $dep.DeploymentName -Force -ErrorAction Stop
+    # ---------------------------------------------------------
+    # 5. Recreate removed locks
+    # ---------------------------------------------------------
+    if ($removedLocks.Count -gt 0) {
+        Write-Host "Recreating locks that were removed for '$rgName'..." -ForegroundColor Cyan
+
+        foreach ($l in $removedLocks) {
+            if ([string]::IsNullOrWhiteSpace($l.LockLevel)) {
+                Write-Host "Skipping recreation of lock '$($l.LockName)' at scope '$($l.LockedScope)' because LockLevel is empty." -ForegroundColor Red
+                continue
+            }
+
+            if ($WhatIf) {
+                Write-Host "[WhatIf] Would recreate lock '$($l.LockName)' at scope '$($l.LockedScope)' (Level: $($l.LockLevel))" -ForegroundColor Yellow
+            }
+            else {
+                Write-Host "Recreating lock '$($l.LockName)' at scope '$($l.LockedScope)' (Level: $($l.LockLevel))" -ForegroundColor Yellow
+                New-AzResourceLock `
+                    -LockName  $l.LockName `
+                    -LockLevel $l.LockLevel `
+                    -LockNotes $l.LockNotes `
+                    -Scope     $l.LockedScope | Out-Null
+            }
         }
     }
+    else {
+        Write-Host "No locks were removed, so nothing to recreate for '$rgName'." -ForegroundColor DarkYellow
+    }
+
+    # Final state of locks
+    Show-RgLocks -RgName $rgName
+
+    Write-Host "Finished processing RG '$rgName'." -ForegroundColor Green
+    Write-Host "============================================================" -ForegroundColor Cyan
 }
 
-# ==============================
-# Main processing
-# ==============================
-foreach ($group in $locksByResource) {
-    $resourceId = $group.Name
-    $locks = $group.Group
-
-    Write-Host "Processing resource: $resourceId" -ForegroundColor Cyan
-
-    # Cache lock definitions to recreate later
-    $originalLockDefs = @()
-    foreach ($lock in $locks) {
-        $originalLockDefs += [PSCustomObject]@{
-            Name  = $lock.Name
-            Level = $lock.Level
-            Notes = $lock.Notes
-        }
-    }
-
-    # Step 1: Remove locks
-    Remove-ResourceLocks -ResourceId $resourceId -Locks $locks
-
-    # Step 2: Delete deployments for the unlocked resource
-    Remove-ResourceDeployments -ResourceId $resourceId
-
-    # Step 3: Recreate locks
-    Recreate-ResourceLocks -ResourceId $resourceId -LockDefinitions $originalLockDefs
-
-    # Store for record if needed
-    $LocksToRecreate += [PSCustomObject]@{
-        ResourceId = $resourceId
-        Locks      = $originalLockDefs
-    }
-
-    Write-Host "Finished processing resource: $resourceId" -ForegroundColor Green
-    Write-Host "------------------------------------------------------------"
-}
-
-# ==============================
-# Summary
-# ==============================
-Write-Host ""
-Write-Host "SUMMARY" -ForegroundColor Cyan
-Write-Host "Total resource-level locks processed: $($resourceLevelLocks.Count)"
-Write-Host "Total locks removed (and re-created): $TotalLocksRemoved"
-
-if ($WhatIf) {
-    Write-Host "NOTE: Script was run in WhatIf mode. No actual changes were made." -ForegroundColor Yellow
-}
-``_
+Write-Host "All requested resource groups processed." -ForegroundColor Cyan

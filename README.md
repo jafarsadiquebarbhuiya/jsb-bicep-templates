@@ -96,3 +96,32 @@ az deployment group create \
 Bicep currently does not provide a native delete or destroy command. Resource removal must be handled manually through the Azure CLI, PowerShell, or the Azure Portal. Alternatively, you can delete the resource group that contains the deployed resources, which effectively removes all resources within it.
 Microsoft Reference:  
 https://learn.microsoft.com/en-us/answers/questions/1128202/using-bicep-to-delete-the-resources?utm_source=chatgpt.com
+
+Deployment with Params:
+Plan command with Param: 
+az deployment group what-if \
+  --name storageTest \
+  --resource-group demo-rg \
+  --template-file dev.bicep \
+  --parameters dev.parameters.json
+
+Apply command with Param:
+az deployment group create \
+  --name storageTest \
+  --resource-group demo-rg \
+  --template-file dev.bicep \
+  --parameters dev.parameters.json
+
+
+Issue: az deployment group create   --resource-group demo-rg   --template-file dev.bicep   --parameters dev.parameters.json
+The content for this response was already consumed
+jafar@MSI-JSB:~/jsb-bicep-templates$ az deployment group list --resource-group demo-rg -o table
+Name                         State      Timestamp                         Mode         ResourceGroup
+---------------------------  ---------  --------------------------------  -----------  ---------------
+Microsoft.AutomationAccount  Succeeded  2025-11-23T06:29:12.462186+00:00  Incremental  demo-rg
+Because the earlier deployment got stuck, you need to delete the partial deployment first:
+
+To delete a deployment name:
+az deployment group delete \
+  --resource-group demo-rg \
+  --name <deploymentName>

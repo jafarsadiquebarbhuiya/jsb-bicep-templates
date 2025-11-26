@@ -2,9 +2,9 @@
 *.json
 
 # Deployment parameter files with secrets
-*.parameters.json
-*.parameters.dev.json
-*.parameters.prod.json
+# *.parameters.json
+# *.parameters.dev.json
+# *.parameters.prod.json
 
 # VS Code settings and local environment files
 .vscode/

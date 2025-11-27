@@ -49,7 +49,7 @@ az deployment group create deploys resources at the resource group level.
 
 
 Note: Change --resource-group demo-rg (replace demo rg with your resource group)
-================DEV==============
+================PLAN-DEV-ENV==============
 Deployment with Params:
 Plan command with Param: 
 az deployment group what-if \
@@ -57,17 +57,17 @@ az deployment group what-if \
   --resource-group demo-rg \
   --template-file dev.bicep \
   --parameters dev.parameters.json
-
+======================DEPLOY-DEV-ENV===========
 Apply command with Param:
 az deployment group create \
   --name storagedev \
   --resource-group demo-rg \
   --template-file dev.bicep \
   --parameters dev.parameters.json
-  ================================
+=====================DEV===========================
 
 
-================TEST==============
+================PLAN-TEST-ENV====================
 Deployment with Params:
 Plan command with Param: 
 az deployment group what-if \
@@ -75,11 +75,11 @@ az deployment group what-if \
   --resource-group demo-rg \
   --template-file test.bicep \
   --parameters test.parameters.json
-
+==================DEPLOY-TEST-ENV=================
 Apply command with Param:
 az deployment group create \
   --name storagetest \
   --resource-group demo-rg \
   --template-file test.bicep \
   --parameters test.parameters.json
-  ================================
+  ================================================

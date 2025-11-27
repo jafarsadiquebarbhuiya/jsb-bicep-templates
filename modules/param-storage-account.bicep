@@ -2,11 +2,13 @@ param storage_account_name string
 param azure_resource_location string
 param storage_account_sku string
 param tags object
+param storage_kind string
 
 resource storageaccount 'Microsoft.Storage/storageAccounts@2021-02-01' = {
   name: storage_account_name
   location: azure_resource_location
-  kind: 'StorageV2'
+  kind: storage_kind
+  
   sku: {
     name: storage_account_sku
   }

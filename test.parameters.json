@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "storage_account_name": {
-            "value": "stdevjafar01"
+            "value": "sttestjafar01"
         },
         "azure_resource_location": {
             "value": "eastus"
@@ -16,7 +16,7 @@
         },
         "tags": {
             "value": {
-                "environment": "dev",
+                "environment": "test",
                 "owner": "jafar"
             }
         }

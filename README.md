@@ -47,39 +47,36 @@ az deployment group create deploys resources at the resource group level.
 
 --template-file storage-account.json points to the ARM or Bicep-generated JSON template that defines the resources (for example, a storage account) to deploy.
 
-
+========================================COMMANDS==================================
 Note: Change --resource-group demo-rg (replace demo rg with your resource group)
-================PLAN-DEV-ENV==============
-Deployment with Params:
+**PLAN-DEV-ENV**
 Plan command with Param: 
 az deployment group what-if \
   --name storagedev \
   --resource-group demo-rg \
   --template-file dev.bicep \
   --parameters dev.parameters.json
-======================DEPLOY-DEV-ENV===========
+  
+  **DEPLOY-DEV-ENV**
 Apply command with Param:
 az deployment group create \
   --name storagedev \
   --resource-group demo-rg \
   --template-file dev.bicep \
   --parameters dev.parameters.json
-=====================DEV===========================
 
-
-================PLAN-TEST-ENV====================
-Deployment with Params:
+**PLAN-TEST-ENV**
 Plan command with Param: 
 az deployment group what-if \
   --name storagetest \
   --resource-group demo-rg \
   --template-file test.bicep \
   --parameters test.parameters.json
-==================DEPLOY-TEST-ENV=================
+
+**DEPLOY-TEST-ENV**
 Apply command with Param:
 az deployment group create \
   --name storagetest \
   --resource-group demo-rg \
   --template-file test.bicep \
   --parameters test.parameters.json
-  ================================================

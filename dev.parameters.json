@@ -2,17 +2,35 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "az_resource_group_name": {
+            "value": "rg-demo-dev"
+        },
         "storage_account_name": {
-            "value": "stdevjafar01"
+            "value": "stdevjafar03"
+        },
+        "rgdeployment": {
+            "value": true
         },
         "deployStorage": {
-            "value": false
+            "value": true
         },
         "deployNetwork": {
             "value": true
         },
+        "deploywebappserviceplan": {
+            "value": true
+        },
         "azure_resource_location": {
-            "value": "eastus"
+            "value": "centralindia"
+        },
+        "web_app_name": {
+            "value": [
+                "demo-dev-webapp-service",
+                "demo-dev-webapp-api"
+            ]
+        },
+        "app_service_plan_name": {
+            "value": "demo-dev-appplan"
         },
         "storage_kind": {
             "value": "StorageV2"

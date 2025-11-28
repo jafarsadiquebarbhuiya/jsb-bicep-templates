@@ -51,32 +51,32 @@ az deployment group create deploys resources at the resource group level.
 Note: Change --resource-group demo-rg (replace demo rg with your resource group)
 **PLAN-DEV-ENV**
 Plan command with Param: 
-az deployment group what-if \
-  --name storagedev \
-  --resource-group demo-rg \
+az deployment sub what-if \
+  --name dev \
+  --location eastus \
   --template-file dev.bicep \
   --parameters dev.parameters.json
   
   **DEPLOY-DEV-ENV**
 Apply command with Param:
-az deployment group create \
-  --name storagedev \
-  --resource-group demo-rg \
+az deployment sub create \
+  --name dev \
+  --location eastus \
   --template-file dev.bicep \
   --parameters dev.parameters.json
 
 **PLAN-TEST-ENV**
 Plan command with Param: 
-az deployment group what-if \
-  --name storagetest \
-  --resource-group demo-rg \
+az deployment sub what-if \
+  --name test \
+  --location eastus \
   --template-file test.bicep \
   --parameters test.parameters.json
 
 **DEPLOY-TEST-ENV**
 Apply command with Param:
-az deployment group create \
-  --name storagetest \
-  --resource-group demo-rg \
+az deployment sub create \
+  --name test \
+  --location eastus \
   --template-file test.bicep \
   --parameters test.parameters.json

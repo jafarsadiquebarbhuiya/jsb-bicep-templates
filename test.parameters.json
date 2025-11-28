@@ -2,17 +2,44 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "az_resource_group_name": {
+            "value": "rg-demo-test"
+        },
         "storage_account_name": {
-            "value": "sttestjafar01"
+            "value": "sttestjafar03"
+        },
+        "rgdeployment": {
+            "value": true
+        },
+        "deployStorage": {
+            "value": true
+        },
+        "deployNetwork": {
+            "value": true
+        },
+        "deploywebappserviceplan": {
+            "value": true
         },
         "azure_resource_location": {
-            "value": "eastus"
+            "value": "centralindia"
         },
-        "storage_kind":{
+        "web_app_name": {
+            "value": [
+                "demo-test-webapp-service",
+                "demo-test-webapp-api"
+            ]
+        },
+        "app_service_plan_name": {
+            "value": "demo-test-appplan"
+        },
+        "storage_kind": {
             "value": "StorageV2"
         },
         "storage_account_sku": {
             "value": "Standard_LRS"
+        },
+        "vnet_name": {
+            "value": "vnet-demo-test-01"
         },
         "tags": {
             "value": {

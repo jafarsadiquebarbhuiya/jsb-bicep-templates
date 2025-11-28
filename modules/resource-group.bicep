@@ -1,16 +1,12 @@
 targetScope = 'subscription'
 
 @description('Resource Group Name')
-param az_rg_name string = 'demo-rg'
-
+param az_resource_group_name string
 @description('Azure Resource Location')
-param az_rg_location string = 'eastus'
-
+param azure_resource_location string
+param tags object
 resource rg 'Microsoft.Resources/resourceGroups@2022-09-01' = {
-  name: az_rg_name
-  location: az_rg_location
-  tags: {
-    environment: 'dev'
-    owner: 'jafar'
-  }
+  name: az_resource_group_name
+  location: azure_resource_location
+  tags: tags
 }

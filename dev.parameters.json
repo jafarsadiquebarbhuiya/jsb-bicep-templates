@@ -5,14 +5,23 @@
         "storage_account_name": {
             "value": "stdevjafar01"
         },
+        "deployStorage": {
+            "value": false
+        },
+        "deployNetwork": {
+            "value": true
+        },
         "azure_resource_location": {
             "value": "eastus"
         },
-        "storage_kind":{
+        "storage_kind": {
             "value": "StorageV2"
         },
         "storage_account_sku": {
             "value": "Standard_LRS"
+        },
+        "vnet_name": {
+            "value": "vnet-demo-dev-01"
         },
         "tags": {
             "value": {

@@ -1,0 +1,80 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.39.26.7824",
+      "templateHash": "7186112950179577452"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "westus",
+      "allowedValues": [
+        "westus",
+        "uksouth"
+      ]
+    }
+  },
+  "variables": {
+    "storage_accounts": [
+      {
+        "name": "webjsbdev01",
+        "kind": "StorageV2",
+        "location": "eastus"
+      },
+      {
+        "name": "webjsbdev02",
+        "kind": "StorageV2",
+        "location": "eastus"
+      }
+    ]
+  },
+  "resources": [
+    {
+      "copy": {
+        "name": "storageaccount",
+        "count": "[length(variables('storage_accounts'))]"
+      },
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-02-01",
+      "name": "[variables('storage_accounts')[copyIndex()].name]",
+      "kind": "[variables('storage_accounts')[copyIndex()].kind]",
+      "location": "[variables('storage_accounts')[copyIndex()].location]",
+      "sku": {
+        "name": "Standard_LRS"
+      }
+    },
+    {
+      "copy": {
+        "name": "storageaccount1",
+        "count": "[length(variables('storage_accounts'))]"
+      },
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-02-01",
+      "name": "[format('{0}{1}', variables('storage_accounts')[copyIndex()].name, copyIndex())]",
+      "kind": "[variables('storage_accounts')[copyIndex()].kind]",
+      "location": "[variables('storage_accounts')[copyIndex()].location]",
+      "sku": {
+        "name": "Standard_LRS"
+      }
+    },
+    {
+      "copy": {
+        "name": "storageaccount3",
+        "count": "[length(variables('storage_accounts'))]"
+      },
+      "condition": "[equals(parameters('location'), variables('storage_accounts')[copyIndex()].location)]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-02-01",
+      "name": "[format('{0}{1}', variables('storage_accounts')[copyIndex()].name, add(copyIndex(), 1))]",
+      "kind": "[variables('storage_accounts')[copyIndex()].kind]",
+      "location": "[variables('storage_accounts')[copyIndex()].location]",
+      "sku": {
+        "name": "Standard_LRS"
+      }
+    }
+  ]
+}

@@ -23,7 +23,6 @@ jobs:
       - name: Azure Login with SPN
         uses: Azure/login@v2
         with:
-          auth-type: SERVICE_PRINCIPAL
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Bicep Plan with WHAT-IF
         run: |

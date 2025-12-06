@@ -1,0 +1,118 @@
+trigger:
+  branches:
+    include:
+      - master
+
+pr:
+  branches:
+    include:
+      - master
+
+pool:
+  name: jsb-msi
+  demands:
+    - Agent.Name -equals jsb-msi-agent
+
+variables:
+  azureServiceConnectionName: "Bicep-AzureServiceConnection"
+  bicepTemplatePath: "dev.bicep"
+  parametersPath: "dev.parameters.json"
+  deploymentName: "dev"
+  location: "eastus"
+
+resources:
+  repositories:
+    - repository: self
+      type: github
+      name: jsadique/jsb-bicep-templates
+      endpoint: GitHub-OAuth-Connection # Uses the GitHub service connection
+      trigger:
+        branches:
+          include:
+            - master
+        paths:
+          include:
+            - "*.bicep"
+            - "*.parameters.json"
+            - azure-pipelines.yml
+
+stages:
+  - stage: Plan
+    displayName: "Bicep Plan (What-If)"
+    jobs:
+      - job: BicepPlan
+        displayName: "Plan Bicep Deployment"
+        steps:
+          - checkout: self
+            displayName: "Checkout Code from GitHub"
+
+          - task: AzureCLI@2
+            displayName: "Azure Login"
+            inputs:
+              azureSubscription: $(azureServiceConnectionName) # Uses the Azure service connection
+              scriptType: "ps"
+              scriptLocation: "inlineScript"
+              inlineScript: "az account show"
+
+          - task: AzureCLI@2
+            displayName: "Bicep Plan with What-If"
+            inputs:
+              azureSubscription: $(azureServiceConnectionName) # Uses the Azure service connection
+              scriptType: "ps"
+              scriptLocation: "inlineScript"
+              inlineScript: |
+                Write-Host "Planning to create resources"
+                az deployment sub what-if `
+                  --name $(deploymentName) `
+                  --location $(location) `
+                  --template-file $(bicepTemplatePath) `
+                  --parameters $(parametersPath)
+
+  - stage: ManualApproval
+    displayName: "Manual Approval Required"
+    dependsOn: Plan
+    condition: succeeded()
+    jobs:
+      - job: waitForValidation
+        displayName: "Wait for Manual Approval"
+        pool: server
+        timeoutInMinutes: "1440"
+        steps:
+          - task: ManualValidation@0
+            inputs:
+              notifyUsers: "jsadique33@gmail.com"
+              instructions: "Review the What-If plan and approve to deploy resources"
+              onTimeout: "reject"
+
+  - stage: Deploy
+    displayName: "Deploy Bicep Resources"
+    dependsOn: ManualApproval
+    condition: succeeded()
+    jobs:
+      - job: BicepDeploy
+        displayName: "Deploy Bicep Template"
+        steps:
+          - checkout: self
+            displayName: "Checkout Code from GitHub"
+
+          - task: AzureCLI@2
+            displayName: "Azure Login"
+            inputs:
+              azureSubscription: $(azureServiceConnectionName) # Uses the Azure service connection
+              scriptType: "ps"
+              scriptLocation: "inlineScript"
+              inlineScript: "az account show"
+
+          - task: AzureCLI@2
+            displayName: "Deploy Bicep Template"
+            inputs:
+              azureSubscription: $(azureServiceConnectionName) # Uses the Azure service connection
+              scriptType: "ps"
+              scriptLocation: "inlineScript"
+              inlineScript: |
+                Write-Host "Deploying resources"
+                az deployment sub create `
+                  --name $(deploymentName) `
+                  --location $(location) `
+                  --template-file $(bicepTemplatePath) `
+                  --parameters $(parametersPath)

@@ -16,4 +16,11 @@ param tags = {
 }
 
 param env = 'dev'
-param project = 'demo'
+
+param projectName = 'demo'
+
+param kvSku = 'standard'
+
+param enablePurgeProtection = true
+
+param softDeleteRetentionDays = 90

@@ -22,13 +22,13 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Debug
+        run: echo "RG = ${{ vars.DEPLOY_RG_NAME }}"
+
       - name: Bicep Plan with WHAT-IF
         run: |
           echo "Planning to create resources"
-          az deployment group what-if \          
-            --resource-group ${{ vars.DEPLOY_RG_NAME }} \   
-            --template-file main.bicep \
-            --parameters main.dev.bicepparam
+          az deployment group what-if --resource-group ${{ vars.DEPLOY_RG_NAME }} --template-file main.bicep --parameters main.dev.bicepparam
 
   deploy:
     needs: plan
@@ -45,10 +45,10 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Debug
+        run: echo "RG = ${{ vars.DEPLOY_RG_NAME }}"
+
       - name: Deploy Bicep Template
         run: |
           echo "Deploying resources"
-          az deployment group create \         
-            --resource-group ${{ vars.DEPLOY_RG_NAME }} \   
-            --template-file main.bicep \
-            --parameters main.dev.bicepparam
+          az deployment group create --resource-group ${{ vars.DEPLOY_RG_NAME }} --template-file main.bicep --parameters main.dev.bicepparam

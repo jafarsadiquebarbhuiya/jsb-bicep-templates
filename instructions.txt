@@ -23,10 +23,10 @@ Copy the output and save the app details now. The secret key cannot be recovered
 command: az login --service-principal -u application-id -p secret-id --tenant tenant-id
 
 Bicep Build Command:
-az bicep build -f dev.bicep
+az bicep build -f main.bicep
 
 Command to create resource group: 
-az deployment sub create   --name test   --location eastus   --template-file ./resource-group.json
+az deployment sub create   --name test   --location eastus   --template-file ./resource-group.bicep
 
 Explanation:
 
@@ -38,45 +38,25 @@ Explanation:
 
 Note: After compiling a Bicep file, Azure generates a corresponding JSON template that the CLI uses for deployment.
 
-Command to create storage-account:
-
-az deployment group create   --resource-group demo-rg   --template-file storage-account.json
-az deployment group create deploys resources at the resource group level.
-
---resource-group demo-rg specifies the target resource group where the resources will be created.
-
---template-file storage-account.json points to the ARM or Bicep-generated JSON template that defines the resources (for example, a storage account) to deploy.
 
 ========================================COMMANDS==================================
-Note: Change --resource-group demo-rg (replace demo rg with your resource group)
-**PLAN-DEV-ENV**
-Plan command with Param: 
-az deployment sub what-if \
-  --name dev \
-  --location eastus \
-  --template-file dev.bicep \
-  --parameters dev.parameters.json
-  
-  **DEPLOY-DEV-ENV**
-Apply command with Param:
-az deployment sub create \
-  --name dev \
-  --location eastus \
-  --template-file dev.bicep \
-  --parameters dev.parameters.json
+Note: 
+1. Change --resource-group demo-rg (replace demo rg with your resource group)
+2. Edit bicepparam as per your Requirement
+dev deployment parameters: main.dev.bicepparam 
+uat deployment parameters: main.uat.bicepparam 
+prod deployment parameters: main.prod.bicepparam 
 
-**PLAN-TEST-ENV**
-Plan command with Param: 
-az deployment sub what-if \
-  --name test \
-  --location eastus \
-  --template-file test.bicep \
-  --parameters test.parameters.json
+Login to Azure Subscription: az login --use-device-code
 
-**DEPLOY-TEST-ENV**
-Apply command with Param:
-az deployment sub create \
-  --name test \
-  --location eastus \
-  --template-file test.bicep \
-  --parameters test.parameters.json
+
+az deployment group what-if \
+  --resource-group demo-rg \
+  --template-file main.bicep \
+  --parameters main.dev.bicepparam
+
+
+az deployment group create \
+  --resource-group demo-rg \
+  --template-file main.bicep \
+  --parameters main.dev.bicepparam

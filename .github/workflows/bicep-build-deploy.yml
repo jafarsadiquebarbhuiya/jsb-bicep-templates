@@ -25,8 +25,8 @@ jobs:
           az deployment sub what-if \
             --name dev \
             --location eastus \
-            --template-file dev.bicep \
-            --parameters dev.parameters.json
+            --template-file main.bicep \
+            --parameters main.dev.bicepparam
 
   deploy:
     needs: plan
@@ -46,5 +46,5 @@ jobs:
           az deployment sub create \
             --name dev \
             --location eastus \
-            --template-file dev.bicep \
-            --parameters dev.parameters.json
+            --template-file main.bicep \
+            --parameters main.dev.bicepparam

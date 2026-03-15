@@ -19,3 +19,47 @@ type AppconfigConfig = {
   location: string
   sku: 'free' | 'standard'
 }
+
+// Network
+
+@export()
+type NsgRuleConfig = {
+  name: string
+  priority: int
+  direction: 'Inbound' | 'Outbound'
+  access: 'Allow' | 'Deny'
+  protocol: 'Tcp' | 'Udp' | '*'
+  sourceAddressPrefix: string
+  destinationAddressPrefix: string
+  sourcePortRange: string
+  destinationPortRange: string
+}
+
+@export()
+type RouteConfig = {
+  environment: string
+  project: string
+  managedBy: string
+  costCenter: string
+}
+
+@export()
+type NsgIdsConfig = {
+  apim: string
+  appGw: string
+  pe: string
+}
+
+@export()
+type SubnetConfig = {
+  name: string
+  snetAddressSpace: string
+}
+
+@export()
+type NetworkConfig = {
+  vnetName: string
+  location: string
+  vnetAddressSpace: string[]
+  subnets: SubnetConfig[]
+}

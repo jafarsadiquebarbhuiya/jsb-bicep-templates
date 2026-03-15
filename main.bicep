@@ -1,10 +1,6 @@
-param storageAccountName string
+import { NetworkConfig } from './shared/types.bicep'
 
 param location string
-
-param storageAccountSku string
-
-param storageAccountKind string
 
 param tags object
 
@@ -12,6 +8,14 @@ param tags object
 param env string
 
 param projectName string
+
+param netconfig NetworkConfig
+
+param storageAccountName string
+
+param storageAccountSku string
+
+param storageAccountKind string
 
 param kvSku string
 
@@ -31,9 +35,8 @@ module storageaccount './modules/storage.bicep' = if (deploystorageaccount) {
   }
 }
 
-// Key-Vault
-
-module keyVault 'modules/keyvault.bicep' = {
+param deploykeyVault bool = false
+module keyVault 'modules/keyvault.bicep' = if (deploykeyVault) {
   name: 'kv-deploy'
   params: {
     config: {
@@ -43,5 +46,12 @@ module keyVault 'modules/keyvault.bicep' = {
       enablePurgeProtection: enablePurgeProtection
       softDeleteRetentionDays: softDeleteRetentionDays
     }
+  }
+}
+
+module network './modules/network.bicep' = {
+  name: 'network-deployment'
+  params: {
+    netconfig: netconfig
   }
 }

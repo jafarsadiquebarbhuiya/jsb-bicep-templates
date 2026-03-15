@@ -1,5 +1,4 @@
 import { NetworkConfig } from './shared/types.bicep'
-import { VmConfig } from './shared/types.bicep'
 
 param storageAccountName string
 param location string

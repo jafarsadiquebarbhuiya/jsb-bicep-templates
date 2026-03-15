@@ -26,7 +26,7 @@ param enablePurgeProtection = true
 param softDeleteRetentionDays = 90
 
 param netconfig = {
-  location: location
+  location: 'eastus'
   vnetName: 'vnet-${projectName}-${env}'
   vnetAddressSpace: ['10.0.0.0/16']
   subnets: [
@@ -36,4 +36,4 @@ param netconfig = {
 }
 
 param adminUsername = 'azureadmin'
-param adminPassword = 'Helloadmin@123!'
+param adminPassword = 'YourP@ssword123!'

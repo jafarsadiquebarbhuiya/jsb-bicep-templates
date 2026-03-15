@@ -69,7 +69,7 @@ resource nginxInstall 'Microsoft.Compute/virtualMachines/extensions@2024-03-01' 
     type: 'CustomScript'
     typeHandlerVersion: '2.1'
     settings: {
-      commandToExecute: 'apt-get update && apt-get install -y nginx && echo "<h1>Response from ${config.vmName}</h1>" > /var/www/html/index.html && systemctl enable nginx && systemctl start nginx'
+      commandToExecute: 'sudo apt-get update -y && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y nginx && echo "<h1>Response from ${config.vmName}</h1>" | sudo tee /var/www/html/index.html && sudo systemctl enable nginx && sudo systemctl start nginx'
     }
   }
 }

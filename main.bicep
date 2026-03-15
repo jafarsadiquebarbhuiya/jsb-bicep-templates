@@ -10,6 +10,7 @@ param kvSku string
 param enablePurgeProtection bool
 param softDeleteRetentionDays int
 param deploystorageaccount bool = false
+param deploykeyVault bool = false
 param netconfig NetworkConfig
 param adminUsername string
 @secure()
@@ -29,7 +30,7 @@ module storageaccount './modules/storage.bicep' = if (deploystorageaccount) {
   }
 }
 
-module keyVault 'modules/keyvault.bicep' = {
+module keyVault 'modules/keyvault.bicep' = if (deploykeyVault) {
   name: 'kv-deploy'
   params: {
     config: {

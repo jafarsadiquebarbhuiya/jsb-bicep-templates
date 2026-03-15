@@ -63,3 +63,13 @@ type NetworkConfig = {
   vnetAddressSpace: string[]
   subnets: SubnetConfig[]
 }
+
+@export()
+type VmConfig = {
+  vmName: string
+  location: string
+  adminUsername: string
+  @secure()
+  adminPassword: string
+  subnetId: string
+}

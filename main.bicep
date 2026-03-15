@@ -1,29 +1,24 @@
 import { NetworkConfig } from './shared/types.bicep'
+import { VmConfig } from './shared/types.bicep'
 
+param storageAccountName string
 param location string
-
+param storageAccountSku string
+param storageAccountKind string
 param tags object
+param projectName string
+param kvSku string
+param enablePurgeProtection bool
+param softDeleteRetentionDays int
+param deploystorageaccount bool = false
+param netconfig NetworkConfig
+param adminUsername string
+@secure()
+param adminPassword string
 
 @allowed(['dev', 'uat', 'prod'])
 param env string
 
-param projectName string
-
-param netconfig NetworkConfig
-
-param storageAccountName string
-
-param storageAccountSku string
-
-param storageAccountKind string
-
-param kvSku string
-
-param enablePurgeProtection bool
-
-param softDeleteRetentionDays int
-
-param deploystorageaccount bool = false
 module storageaccount './modules/storage.bicep' = if (deploystorageaccount) {
   name: 'deploy-storage'
   params: {
@@ -35,8 +30,7 @@ module storageaccount './modules/storage.bicep' = if (deploystorageaccount) {
   }
 }
 
-param deploykeyVault bool = false
-module keyVault 'modules/keyvault.bicep' = if (deploykeyVault) {
+module keyVault 'modules/keyvault.bicep' = {
   name: 'kv-deploy'
   params: {
     config: {
@@ -53,5 +47,31 @@ module network './modules/network.bicep' = {
   name: 'network-deployment'
   params: {
     netconfig: netconfig
+  }
+}
+
+module vm1 './modules/vm.bicep' = {
+  name: 'vm1-deployment'
+  params: {
+    config: {
+      vmName: 'vm-${projectName}-${env}-01'
+      location: location
+      adminUsername: adminUsername
+      adminPassword: adminPassword
+      subnetId: network.outputs.subnetIds[0].id
+    }
+  }
+}
+
+module vm2 './modules/vm.bicep' = {
+  name: 'vm2-deployment'
+  params: {
+    config: {
+      vmName: 'vm-${projectName}-${env}-02'
+      location: location
+      adminUsername: adminUsername
+      adminPassword: adminPassword
+      subnetId: network.outputs.subnetIds[0].id
+    }
   }
 }

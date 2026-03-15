@@ -34,3 +34,6 @@ param netconfig = {
     { name: 'snet-${projectName}-appgw-${env}', snetAddressSpace: '10.0.1.0/24' }
   ]
 }
+
+param adminUsername = 'azureadmin'
+param adminPassword = 'Helloadmin@123!'

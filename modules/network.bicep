@@ -22,3 +22,11 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2025-01-01' = {
     ]
   }
 }
+
+output vnetId string = virtualNetwork.id
+output subnetIds array = [
+  for (subnet, i) in netconfig.subnets: {
+    name: subnet.name
+    id: virtualNetwork.properties.subnets[i].id
+  }
+]

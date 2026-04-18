@@ -50,8 +50,9 @@ module network './modules/network.bicep' = {
   }
 }
 
-module vm1 './modules/vm.bicep' = {
-  name: 'vm1-deployment'
+param deployvirtualMachin bool = false
+module virtualMachin './modules/vm.bicep' = if (deployvirtualMachin) {
+  name: 'vm2-deployment'
   params: {
     config: {
       vmName: 'vm-${projectName}-${env}-01'
@@ -63,21 +64,7 @@ module vm1 './modules/vm.bicep' = {
   }
 }
 
-param deployvirtualMachin bool = false
-module virtualMachin './modules/vm.bicep' = if (deployvirtualMachin) {
-  name: 'vm2-deployment'
-  params: {
-    config: {
-      vmName: 'vm-${projectName}-${env}-02'
-      location: location
-      adminUsername: adminUsername
-      adminPassword: adminPassword
-      subnetId: network.outputs.subnetIds[0].id
-    }
-  }
-}
-
-param deployFunctionApp bool = false
+param deployFunctionApp bool = true
 
 module functionApp './modules/functionApp.bicep' = if (deployFunctionApp) {
   name: 'functionapp-deployment'

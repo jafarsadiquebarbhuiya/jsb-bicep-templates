@@ -17,7 +17,7 @@ param tags = {
 
 param env = 'dev'
 
-param projectName = 'infra'
+param projectName = 'poc'
 
 param kvSku = 'standard'
 

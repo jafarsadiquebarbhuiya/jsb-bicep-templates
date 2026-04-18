@@ -2,7 +2,7 @@ using 'main.bicep'
 
 param storageAccountName = 'stjsblearning001'
 
-param location = 'eastus'
+param location = 'westeurope'
 
 param storageAccountSku = 'Standard_LRS'
 

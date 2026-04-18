@@ -26,7 +26,7 @@ param enablePurgeProtection = true
 param softDeleteRetentionDays = 90
 
 param netconfig = {
-  location: 'eastus'
+  location: 'westeurope'
   vnetName: 'vnet-${projectName}-${env}'
   vnetAddressSpace: ['10.0.0.0/16']
   subnets: [

@@ -43,7 +43,8 @@ module keyVault 'modules/keyvault.bicep' = if (deploykeyVault) {
   }
 }
 
-module network './modules/network.bicep' = {
+param deployNetwork bool = false
+module network './modules/network.bicep' = if (deployNetwork) {
   name: 'network-deployment'
   params: {
     netconfig: netconfig
@@ -64,7 +65,7 @@ module virtualMachin './modules/vm.bicep' = if (deployvirtualMachin) {
   }
 }
 
-param deployFunctionApp bool = true
+param deployFunctionApp bool = false
 
 module functionApp './modules/functionApp.bicep' = if (deployFunctionApp) {
   name: 'functionapp-deployment'

@@ -43,7 +43,7 @@ module keyVault 'modules/keyvault.bicep' = if (deploykeyVault) {
   }
 }
 
-param deployNetwork bool = false
+param deployNetwork bool = true
 module network './modules/network.bicep' = if (deployNetwork) {
   name: 'network-deployment'
   params: {

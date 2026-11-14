@@ -32,7 +32,7 @@ resource api 'Microsoft.ApiManagement/service/apis@2021-08-01' = {
     authenticationSettings: {}
     description: '${apiName}-API'
     displayName: apiName
-    path: '/'
+    path: 'products'
     protocols: [
       'https'
     ]

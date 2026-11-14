@@ -1,0 +1,257 @@
+openapi: 3.0.3
+info:
+  title: Products API
+  description: >-
+    REST API implemented by the Azure Functions application
+    func-jsb-dev-01. Provides health checking and product CRUD operations.
+  version: 1.0.0
+
+servers:
+  - url: https://func-jsb-dev-01.azurewebsites.net
+    description: Azure Function App backend
+
+tags:
+  - name: Health
+    description: API health operations
+  - name: Products
+    description: Product CRUD operations
+
+paths:
+  /api/health:
+    get:
+      operationId: Health
+      tags:
+        - Health
+      summary: Check API health
+      description: Returns the current health status of the API.
+      responses:
+        '200':
+          description: API is healthy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: Healthy
+                message: Sample API is running.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/products:
+    get:
+      operationId: GetProducts
+      tags:
+        - Products
+      summary: Get all products
+      description: Returns all products currently held by the Function App.
+      responses:
+        '200':
+          description: List of products.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+              example:
+                - id: 1
+                  name: Laptop
+                  description: Business Laptop
+                  price: 65000
+                - id: 2
+                  name: Monitor
+                  description: 27-inch QHD Monitor
+                  price: 18000
+                - id: 3
+                  name: Keyboard
+                  description: Mechanical Keyboard
+                  price: 3500
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      operationId: CreateProduct
+      tags:
+        - Products
+      summary: Create a product
+      description: Creates a product and returns the created product.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+            example:
+              name: Mouse
+              description: Wireless Mouse
+              price: 1500
+      responses:
+        '201':
+          description: Product created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+              example:
+                id: 4
+                name: Mouse
+                description: Wireless Mouse
+                price: 1500
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/products/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Numeric product identifier.
+        schema:
+          type: integer
+          format: int32
+          minimum: 1
+        example: 1
+
+    get:
+      operationId: GetProductById
+      tags:
+        - Products
+      summary: Get a product by ID
+      description: Returns the product matching the supplied ID.
+      responses:
+        '200':
+          description: Product found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+              example:
+                id: 1
+                name: Laptop
+                description: Business Laptop
+                price: 65000
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      operationId: UpdateProduct
+      tags:
+        - Products
+      summary: Update a product
+      description: Updates the product identified by the supplied ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+            example:
+              name: Laptop Pro
+              description: Updated Business Laptop
+              price: 75000
+      responses:
+        '200':
+          description: Product updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+              example:
+                id: 1
+                name: Laptop Pro
+                description: Updated Business Laptop
+                price: 75000
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      operationId: DeleteProduct
+      tags:
+        - Products
+      summary: Delete a product
+      description: Deletes the product identified by the supplied ID.
+      responses:
+        '204':
+          description: Product deleted. No response body.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: Healthy
+        message:
+          type: string
+          example: Sample API is running.
+      required:
+        - status
+        - message
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+          example: 1
+        name:
+          type: string
+          example: Laptop
+        description:
+          type: string
+          example: Business Laptop
+        price:
+          type: number
+          format: double
+          example: 65000
+      required:
+        - id
+        - name
+        - description
+        - price
+
+    ProductRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Mouse
+        description:
+          type: string
+          example: Wireless Mouse
+        price:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+          example: 1500
+      required:
+        - name
+        - description
+        - price
+
+  responses:
+    BadRequest:
+      description: The request is invalid or contains invalid product data.
+    Unauthorized:
+      description: A valid Function key is required by the backend.
+    NotFound:
+      description: The requested product does not exist.

@@ -39,5 +39,7 @@ resource api 'Microsoft.ApiManagement/service/apis@2021-08-01' = {
     serviceUrl: backendServiceUrl
     subscriptionRequired: true
     type: 'http'
+    format: 'openapi'
+    value: loadTextContent('./products-api.openapi.yaml')
   }
 }

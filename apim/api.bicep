@@ -18,7 +18,7 @@ resource api 'Microsoft.ApiManagement/service/apis@2021-08-01' = {
   properties: {
     apiRevisionDescription: ''
     apiType: 'http'
-    apiVersion: ''
+    apiVersion: '1.0'
     apiVersionDescription: ''
     authenticationSettings: {}
     description: '${apiName}-API'

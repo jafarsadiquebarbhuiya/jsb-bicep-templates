@@ -12,13 +12,22 @@ resource apimService 'Microsoft.ApiManagement/service@2024-05-01' existing = {
   name: apimServiceName
 }
 
+resource apiVersionSet 'Microsoft.ApiManagement/service/apiVersionSets@2024-05-01' = {
+  parent: apimService
+  name: 'demo-api-version-set'
+  properties: {
+    displayName: apiName
+    versioningScheme: 'Segment'
+  }
+}
 resource api 'Microsoft.ApiManagement/service/apis@2021-08-01' = {
   name: apiName
   parent: apimService
   properties: {
     apiRevisionDescription: ''
     apiType: 'http'
-    apiVersion: '1.0'
+    apiVersion: 'v1'
+    apiVersionSetId: apiVersionSet.id
     apiVersionDescription: ''
     authenticationSettings: {}
     description: '${apiName}-API'

@@ -22,7 +22,7 @@ resource api 'Microsoft.ApiManagement/service/apis@2021-08-01' = {
     apiVersionDescription: ''
     authenticationSettings: {}
     description: '${apiName}-API'
-    displayName: '${apiName}-API'
+    displayName: apiName
     path: '/'
     protocols: [
       'https'

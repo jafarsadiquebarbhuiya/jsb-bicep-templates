@@ -9,9 +9,7 @@ param tags object
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2025-01-01' = {
   name: netconfig.vnetName
   location: netconfig.location
-  tags: union(commonTags, {
-    tags: tags
-  })
+  tags: union(commonTags, tags)
   properties: {
     addressSpace: {
       addressPrefixes: netconfig.vnetAddressSpace

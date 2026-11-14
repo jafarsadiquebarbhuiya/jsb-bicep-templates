@@ -4,10 +4,11 @@ import { KeyVaultConfig } from '../shared/types.bicep'
 
 param config KeyVaultConfig
 
+param tags object
+
 resource kv 'Microsoft.KeyVault/vaults@2023-07-01' = {
   name: config.name
   location: config.location
-  tags: commonTags
   properties: {
     sku: {
       name: config.sku
@@ -24,4 +25,5 @@ resource kv 'Microsoft.KeyVault/vaults@2023-07-01' = {
       bypass: 'AzureServices'
     }
   }
+  tags: union(commonTags, tags)
 }

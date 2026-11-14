@@ -34,9 +34,7 @@ resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
     }
     publicNetworkAccess: 'Enabled'
   }
-  tags: union(commonTags, {
-    tags: tags
-  })
+  tags: union(commonTags, tags)
   resource blobServices 'blobServices' = {
     name: 'default'
     properties: {
@@ -62,6 +60,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2024-04-01' = {
   properties: {
     reserved: true
   }
+  tags: union(commonTags, tags)
 }
 resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
   name: appName
@@ -78,6 +77,7 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
       linuxFxVersion: 'DOTNET-ISOLATED|8.0'
     }
   }
+  tags: union(commonTags, tags)
   resource configAppSettings 'config' = {
     name: 'appsettings'
     properties: {

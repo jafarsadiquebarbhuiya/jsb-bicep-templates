@@ -40,6 +40,7 @@ module keyVault 'modules/keyvault.bicep' = if (deploykeyVault) {
       enablePurgeProtection: enablePurgeProtection
       softDeleteRetentionDays: softDeleteRetentionDays
     }
+    tags: tags
   }
 }
 

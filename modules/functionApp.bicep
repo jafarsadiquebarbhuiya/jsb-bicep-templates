@@ -1,3 +1,5 @@
+import { commonTags } from '../shared/constants.bicep'
+
 param location string = resourceGroup().location
 
 @minLength(2)
@@ -5,6 +7,8 @@ param env string
 
 @minLength(3)
 param projectName string
+
+param tags object
 
 @description('A globally unique name for your deployed function app.')
 param appName string = 'func-${projectName}-${env}-01'
@@ -30,6 +34,9 @@ resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
     }
     publicNetworkAccess: 'Enabled'
   }
+  tags: union(commonTags, {
+    tags: tags
+  })
   resource blobServices 'blobServices' = {
     name: 'default'
     properties: {

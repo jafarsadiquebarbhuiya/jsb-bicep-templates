@@ -9,10 +9,7 @@ param storageAccountSku = 'Standard_LRS'
 param storageAccountKind = 'StorageV2'
 
 param tags = {
-  ResouceType: 'StorageAccount'
   Environment: 'DEV'
-  Owner: 'Jafar'
-  ManagedBy: 'bicep'
 }
 
 param env = 'dev'

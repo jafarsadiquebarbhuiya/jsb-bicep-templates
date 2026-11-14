@@ -1,7 +1,7 @@
 @export()
 var commonTags = {
   Owner: 'Jafar'
-  ManagedBy: 'bicep'
+  ManagedBy: 'Bicep'
   CostCenter: 'demo-project'
   TechLead: 'Jafar'
 }

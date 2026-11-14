@@ -4,10 +4,14 @@ import { NetworkConfig } from '../shared/types.bicep'
 
 param netconfig NetworkConfig
 
+param tags object
+
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2025-01-01' = {
   name: netconfig.vnetName
   location: netconfig.location
-  tags: commonTags
+  tags: union(commonTags, {
+    tags: tags
+  })
   properties: {
     addressSpace: {
       addressPrefixes: netconfig.vnetAddressSpace

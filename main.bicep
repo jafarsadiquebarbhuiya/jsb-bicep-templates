@@ -48,6 +48,7 @@ module network './modules/network.bicep' = if (deployNetwork) {
   name: 'network-deployment'
   params: {
     netconfig: netconfig
+    tags: tags
   }
 }
 
@@ -73,5 +74,6 @@ module functionApp './modules/functionApp.bicep' = if (deployFunctionApp) {
     location: location
     projectName: projectName
     env: env
+    tags: tags
   }
 }

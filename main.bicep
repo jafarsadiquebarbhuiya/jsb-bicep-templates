@@ -60,18 +60,18 @@ module virtualMachin './modules/vm.bicep' = if (deployvirtualMachin) {
       location: location
       adminUsername: adminUsername
       adminPassword: adminPassword
-      subnetId: network.outputs.subnetIds[0].id
+      subnetId: network!.outputs.subnetIds[0].id
     }
   }
 }
 
-param deployFunctionApp bool = false
-
+param deployFunctionApp bool = true
 module functionApp './modules/functionApp.bicep' = if (deployFunctionApp) {
   name: 'functionapp-deployment'
   params: {
     appName: 'func-${projectName}-${env}-01'
     location: location
-    resourceToken: toLower(uniqueString(subscription().id, location))
+    projectName: projectName
+    env: env
   }
 }

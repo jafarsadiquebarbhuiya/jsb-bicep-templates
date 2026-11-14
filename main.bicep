@@ -15,10 +15,12 @@ param netconfig NetworkConfig
 param adminUsername string
 @secure()
 param adminPassword string
-
 @allowed(['dev', 'uat', 'prod'])
 param env string
-
+@description('The name of the existing API Management service')
+param apimServiceName string
+@description('The unique name for the API in APIM')
+param apiName string
 module storageaccount './modules/storage.bicep' = if (deploystorageaccount) {
   name: 'deploy-storage'
   params: {
@@ -76,5 +78,14 @@ module functionApp './modules/functionApp.bicep' = if (deployFunctionApp) {
     projectName: projectName
     env: env
     tags: tags
+  }
+}
+
+module apim './apim/api.bicep' = {
+  name: 'apim-deployment'
+  params: {
+    apimServiceName: apimServiceName
+    apiName: apiName
+    backendServiceUrl: functionApp!.outputs.functionAppUrl
   }
 }

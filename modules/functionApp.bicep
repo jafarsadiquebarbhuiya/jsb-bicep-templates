@@ -15,6 +15,8 @@ param appName string = 'func-${projectName}-${env}-01'
 
 var deploymentStorageContainerName = 'app-package-${take(appName, 32)}-${take(projectName, 7)}'
 
+var functionPackageUrl = 'https://${storage.name}.blob.core.windows.net/${deploymentStorageContainerName}/functionapp.zip'
+
 var storageAccountAllowSharedKeyAccess = false
 
 resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
@@ -84,6 +86,7 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
       AzureWebJobsStorage__accountName: storage.name
       FUNCTIONS_EXTENSION_VERSION: '~4'
       FUNCTIONS_WORKER_RUNTIME: 'dotnet-isolated'
+      WEBSITE_RUN_FROM_PACKAGE: functionPackageUrl
     }
   }
 }

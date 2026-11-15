@@ -88,4 +88,4 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
   }
 }
 
-output functionAppUrl string = 'https://${functionApp.properties.defaultHostName}/api'
+output functionAppUrl string = 'https://${functionApp.properties.defaultHostName}'

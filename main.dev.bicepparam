@@ -36,4 +36,4 @@ param adminUsername = 'azureadmin'
 param adminPassword = 'YourP@ssword123!'
 
 param apimServiceName = 'apim-jsb-dev'
-param apiName = 'api-demo'
+param apiName = 'api-products-dev'

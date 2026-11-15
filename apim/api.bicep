@@ -7,6 +7,10 @@ param apiName string
 @description('The backend service URL (required)')
 param backendServiceUrl string
 
+param apiVersionSetName string
+
+param apiVersion string
+
 // Reference the existing APIM instance
 resource apimService 'Microsoft.ApiManagement/service@2024-05-01' existing = {
   name: apimServiceName
@@ -14,7 +18,7 @@ resource apimService 'Microsoft.ApiManagement/service@2024-05-01' existing = {
 
 resource apiVersionSet 'Microsoft.ApiManagement/service/apiVersionSets@2024-05-01' = {
   parent: apimService
-  name: 'demo-api-version-set'
+  name: apiVersionSetName
   properties: {
     displayName: apiName
     versioningScheme: 'Segment'
@@ -43,3 +47,16 @@ resource api 'Microsoft.ApiManagement/service/apis@2021-08-01' = {
     value: loadTextContent('./products-api.openapi.yaml')
   }
 }
+
+// API-level inbound policy
+resource apiPolicy 'Microsoft.ApiManagement/service/apis/policies@2021-08-01' = {
+  parent: api
+  name: 'policy'
+  properties: {
+    format: 'rawxml'
+    value: loadTextContent('./products-api-policy.xml')
+  }
+}
+
+output apiId string = api.id
+output apiUrl string = 'https://${apimService.name}.azure-api.net/products/${apiVersion}'

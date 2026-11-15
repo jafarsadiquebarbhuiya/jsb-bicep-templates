@@ -37,3 +37,6 @@ param adminPassword = 'YourP@ssword123!'
 
 param apimServiceName = 'apim-jsb-dev'
 param apiName = 'api-products-dev'
+param apiVersionSetName = 'products-api-version-set'
+
+param apiVersion = 'v1'

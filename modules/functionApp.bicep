@@ -87,8 +87,13 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
       FUNCTIONS_EXTENSION_VERSION: '~4'
       FUNCTIONS_WORKER_RUNTIME: 'dotnet-isolated'
       WEBSITE_RUN_FROM_PACKAGE: functionPackageUrl
+      AzureWebJobsStorage__credential: 'managedidentity'
     }
   }
 }
 
 output functionAppUrl string = 'https://${functionApp.properties.defaultHostName}'
+output functionAppName string = functionApp.name
+output storageAccountName string = storage.name
+output packageContainerName string = deploymentStorageContainerName
+output functionAppResourceId string = functionApp.id

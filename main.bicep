@@ -21,6 +21,9 @@ param env string
 param apimServiceName string
 @description('The unique name for the API in APIM')
 param apiName string
+param apiVersionSetName string
+param apiVersion string
+
 module storageaccount './modules/storage.bicep' = if (deploystorageaccount) {
   name: 'deploy-storage'
   params: {
@@ -87,5 +90,7 @@ module apim './apim/api.bicep' = {
     apimServiceName: apimServiceName
     apiName: apiName
     backendServiceUrl: functionApp!.outputs.functionAppUrl
+    apiVersionSetName: apiVersionSetName
+    apiVersion: apiVersion
   }
 }
